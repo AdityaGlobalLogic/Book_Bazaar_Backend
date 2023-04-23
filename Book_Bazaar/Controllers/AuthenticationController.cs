@@ -1,8 +1,13 @@
 ﻿using Book_Bazaar.Models;
+using Book_Bazaar.Models.Authentication.Login;
 using Book_Bazaar.Models.Authentication.SignUp;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using User.Management.Service.Models;
 using User.Management.Service.Services;
 
@@ -17,11 +22,12 @@ namespace Book_Bazaar.Controllers
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
         public AuthenticationController( RoleManager<IdentityRole> roleManager, 
-            UserManager<IdentityUser> userManager, IEmailService emailService)
+            UserManager<IdentityUser> userManager, IEmailService emailService, IConfiguration configuration)
         {
             _roleManager = roleManager;
             _userManager = userManager;
             _emailService = emailService;
+            _configuration = configuration;
         }
 
         [HttpPost]
@@ -84,6 +90,45 @@ namespace Book_Bazaar.Controllers
 
             return StatusCode(StatusCodes.Status500InternalServerError,
                         new Response { Status = "Error", Message = "This user does not exist!" });
+        }
+
+        [HttpPost]
+        [Route("login")]
+        public async Task<IActionResult> Login([FromBody] LoginModel loginModel)
+        {
+            var user = await _userManager.FindByEmailAsync(loginModel.Email);
+            if (user != null && await _userManager.CheckPasswordAsync(user, loginModel.Password))
+            {
+                var authClaims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name,user.Email),
+                    new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
+                };
+                var userRoles = await _userManager.GetRolesAsync(user);
+                foreach (var role in userRoles)
+                {
+                    authClaims.Add(new Claim(ClaimTypes.Role, role));
+                }
+                var jwtToken = GetToken(authClaims);
+                return Ok(
+                    new
+                    {
+                        token = new JwtSecurityTokenHandler().WriteToken(jwtToken),
+                        expiration = jwtToken.ValidTo
+                    });
+            }
+            return Unauthorized();
+        }
+
+        private JwtSecurityToken GetToken(List<Claim> authClaims)
+        {
+            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
+            var token = new JwtSecurityToken(
+                issuer: _configuration["JWT:ValidIssuer"], audience: _configuration["JWT:ValidAudience"], expires: DateTime.Now.AddHours(3),
+                claims: authClaims,
+                signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+                );
+            return token;
         }
     }
 }
