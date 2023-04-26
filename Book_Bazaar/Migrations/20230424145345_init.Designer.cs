@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Book_Bazaar.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20230422164839_RolesSeeded")]
-    partial class RolesSeeded
+    [Migration("20230424145345_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -54,21 +54,21 @@ namespace Book_Bazaar.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "4cbab96e-9095-4ecc-ae7f-54fceff206e3",
+                            Id = "9e96d54b-e21a-4733-8359-aaf517e5deb1",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "a57d9d55-b2b3-4325-947a-b3551baf3cd9",
+                            Id = "a9803032-5425-44fb-a590-617b2f5c7b0a",
                             ConcurrencyStamp = "2",
                             Name = "User",
                             NormalizedName = "User"
                         },
                         new
                         {
-                            Id = "8075fd8b-5859-4cff-ab60-0345997ca369",
+                            Id = "af6f4f49-bb6d-447b-882b-8b0a0807686e",
                             ConcurrencyStamp = "3",
                             Name = "Vendor",
                             NormalizedName = "Vendor"
