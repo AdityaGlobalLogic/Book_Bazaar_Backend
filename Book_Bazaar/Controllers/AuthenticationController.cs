@@ -49,7 +49,7 @@ namespace Book_Bazaar.Controllers
                 Email = registerUser.Email,
                 SecurityStamp = Guid.NewGuid().ToString(),
                 UserName = registerUser.FirstName + registerUser.LastName,
-                TwoFactorEnabled=true
+            
             };
 
             if(await _roleManager.RoleExistsAsync(role))
@@ -88,8 +88,9 @@ namespace Book_Bazaar.Controllers
                 var result = await _userManager.ConfirmEmailAsync(user, token);
                 if(result.Succeeded)
                 {
-                    return StatusCode(StatusCodes.Status200OK,
-                        new Response { Status = "Success", Message = "Email verified successfully" });
+                    //return StatusCode(StatusCodes.Status200OK,
+                    //    new Response { Status = "Success", Message = "Email verified successfully" });
+                    return Redirect("https://www.google.com");
                 }
             }
 
@@ -102,17 +103,6 @@ namespace Book_Bazaar.Controllers
         public async Task<IActionResult> Login([FromBody] LoginModel loginModel)
         {
             var user = await _userManager.FindByEmailAsync(loginModel.Email);
-            if (user.TwoFactorEnabled)
-            {
-                await _signInManager.SignOutAsync();
-                await _signInManager.PasswordSignInAsync(user, loginModel.Password, false, true);
-                var token = await _userManager.GenerateTwoFactorTokenAsync(user, "Email");
-                var message = new Message(new string[] { user.Email }, "OTP Confirmation", token);
-                _emailService.SendEmail(message);
-                return StatusCode(StatusCodes.Status200OK,
-                    new Response { Status = "Success", Message = $"An OTP is sent to your Email : {user.Email}" });
-
-            }
             if (user != null && await _userManager.CheckPasswordAsync(user, loginModel.Password))
             {
                 var authClaims = new List<Claim>
@@ -137,41 +127,7 @@ namespace Book_Bazaar.Controllers
             return Unauthorized();
         }
 
-        [HttpPost]
-        [Route("login-2FA")]
-        public async Task<IActionResult> LoginWithOTP(string code,string email)
-        {
-            var user = await _userManager.FindByEmailAsync(email);
-            var signIn = await _signInManager.TwoFactorSignInAsync("Email", code, false, false);
-            if (signIn.Succeeded)
-            {
-                if (user != null)
-                {
-                    var authClaims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name,user.Email),
-                    new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
-                };
-                    var userRoles = await _userManager.GetRolesAsync(user);
-                    foreach (var role in userRoles)
-                    {
-                        authClaims.Add(new Claim(ClaimTypes.Role, role));
-                    }
-
-                    var jwtToken = GetToken(authClaims);
-                    return Ok(
-                        new
-                        {
-                            token = new JwtSecurityTokenHandler().WriteToken(jwtToken),
-                            expiration = jwtToken.ValidTo
-                        });
-                }
-
-            }
-            return StatusCode(StatusCodes.Status404NotFound,
-                    new Response { Status = "Error", Message = $"Invalid Code." });
-
-        }
+        
         [HttpPost]
         [AllowAnonymous]
         [Route("forgot-password")]
