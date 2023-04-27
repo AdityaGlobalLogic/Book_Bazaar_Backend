@@ -46,15 +46,15 @@ namespace Book_Bazaar.Controllers
 
             IdentityUser user = new()
             {
-                Email = registerUser.Email,
+                Email = registerUser.Email.Trim(),
                 SecurityStamp = Guid.NewGuid().ToString(),
-                UserName = registerUser.FirstName + registerUser.LastName,
+                UserName = registerUser.FirstName.Trim() + registerUser.LastName.Trim(),
             
             };
 
             if(await _roleManager.RoleExistsAsync(role))
             {
-                var result = await _userManager.CreateAsync(user, registerUser.Password);
+                var result = await _userManager.CreateAsync(user, registerUser.Password.Trim());
                 if (!result.Succeeded)
                 {
                     return StatusCode(StatusCodes.Status500InternalServerError,
@@ -88,9 +88,9 @@ namespace Book_Bazaar.Controllers
                 var result = await _userManager.ConfirmEmailAsync(user, token);
                 if(result.Succeeded)
                 {
-                    //return StatusCode(StatusCodes.Status200OK,
-                    //    new Response { Status = "Success", Message = "Email verified successfully" });
-                    return Redirect("https://www.google.com");
+                    /*return StatusCode(StatusCodes.Status200OK,
+                        new Response { Status = "Success", Message = "Email verified successfully" });*/
+                    return Redirect("http://localhost:3000");
                 }
             }
 
@@ -102,8 +102,8 @@ namespace Book_Bazaar.Controllers
         [Route("login")]
         public async Task<IActionResult> Login([FromBody] LoginModel loginModel)
         {
-            var user = await _userManager.FindByEmailAsync(loginModel.Email);
-            if (user != null && await _userManager.CheckPasswordAsync(user, loginModel.Password))
+            var user = await _userManager.FindByEmailAsync(loginModel.Email.Trim());
+            if (user != null && await _userManager.CheckPasswordAsync(user, loginModel.Password.Trim()))
             {
                 var authClaims = new List<Claim>
                 {
@@ -154,6 +154,7 @@ namespace Book_Bazaar.Controllers
 
             return Ok(new { model });
         }
+
         [HttpPost]
         [AllowAnonymous]
         [Route("reset-password")]
