@@ -1,10 +1,12 @@
 ﻿using Book_Bazaar.Models;
 using Book_Bazaar.Models.Authentication.Login;
 using Book_Bazaar.Models.Authentication.SignUp;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -18,15 +20,17 @@ namespace Book_Bazaar.Controllers
     public class AuthenticationController : ControllerBase
     {
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly SignInManager<IdentityUser> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
         public AuthenticationController( RoleManager<IdentityRole> roleManager, 
-            UserManager<IdentityUser> userManager, IEmailService emailService, IConfiguration configuration)
+            UserManager<IdentityUser> userManager, IEmailService emailService, IConfiguration configuration, SignInManager<IdentityUser> signInManager)
         {
             _roleManager = roleManager;
             _userManager = userManager;
             _emailService = emailService;
+            _signInManager= signInManager;
             _configuration = configuration;
         }
 
@@ -44,7 +48,8 @@ namespace Book_Bazaar.Controllers
             {
                 Email = registerUser.Email,
                 SecurityStamp = Guid.NewGuid().ToString(),
-                UserName = registerUser.FirstName + registerUser.LastName
+                UserName = registerUser.FirstName + registerUser.LastName,
+            
             };
 
             if(await _roleManager.RoleExistsAsync(role))
@@ -83,8 +88,9 @@ namespace Book_Bazaar.Controllers
                 var result = await _userManager.ConfirmEmailAsync(user, token);
                 if(result.Succeeded)
                 {
-                    return StatusCode(StatusCodes.Status200OK,
-                        new Response { Status = "Success", Message = "Email verified successfully" });
+                    //return StatusCode(StatusCodes.Status200OK,
+                    //    new Response { Status = "Success", Message = "Email verified successfully" });
+                    return Redirect("https://www.google.com");
                 }
             }
 
@@ -109,6 +115,7 @@ namespace Book_Bazaar.Controllers
                 {
                     authClaims.Add(new Claim(ClaimTypes.Role, role));
                 }
+               
                 var jwtToken = GetToken(authClaims);
                 return Ok(
                     new
@@ -118,6 +125,59 @@ namespace Book_Bazaar.Controllers
                     });
             }
             return Unauthorized();
+        }
+
+        
+        [HttpPost]
+        [AllowAnonymous]
+        [Route("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([Required] string email)
+        {
+            var user= await _userManager.FindByEmailAsync(email);
+            if (user != null)
+            {
+                var token= await _userManager.GeneratePasswordResetTokenAsync(user);
+                var forgotPasswordlink = Url.Action(nameof(ResetPassword), "Authentication", new { token, email = user.Email }, Request.Scheme);
+                var message = new Message(new string[] { user.Email }, "Forgot Password Link : ", forgotPasswordlink);
+                _emailService.SendEmail(message);
+                return StatusCode(StatusCodes.Status200OK,
+                        new Response { Status = "Success", Message = $"Password change request is sent on mail : {user.Email}.Kindly open your mail and click on the link" });
+            }
+            return StatusCode(StatusCodes.Status400BadRequest,
+                        new Response { Status = "Error", Message = $"Couldn't send link to mail, kindly try again." });
+        }
+
+        [HttpGet("reset-password")]
+        public async Task<IActionResult> ResetPassword(string token, string email)
+        {
+            var model= new ResetPassword { Token=token, Email=email };
+
+            return Ok(new { model });
+        }
+        [HttpPost]
+        [AllowAnonymous]
+        [Route("reset-password")]
+        public async Task<IActionResult> ResetPassword(ResetPassword resetPassword)
+        {
+            var user = await _userManager.FindByEmailAsync(resetPassword.Email);
+            if (user != null)
+            {
+                var resetPassResult = await _userManager.ResetPasswordAsync(user, resetPassword.Token, resetPassword.Email);
+                if (!resetPassResult.Succeeded)
+                {
+
+                    foreach(var error in resetPassResult.Errors)
+                    {
+                        ModelState.AddModelError(error.Code, error.Description);
+                    }
+                    return Ok(ModelState);
+                }
+
+                return StatusCode(StatusCodes.Status200OK,
+                        new Response { Status = "Success", Message = $"Password changed succesfully" });
+            }
+            return StatusCode(StatusCodes.Status400BadRequest,
+                        new Response { Status = "Error", Message = $"Couldn't send link to mail, kindly try again." });
         }
 
         private JwtSecurityToken GetToken(List<Claim> authClaims)
