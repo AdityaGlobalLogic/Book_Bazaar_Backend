@@ -83,8 +83,9 @@ namespace Book_Bazaar.Controllers
                 var result = await _userManager.ConfirmEmailAsync(user, token);
                 if(result.Succeeded)
                 {
-                    return StatusCode(StatusCodes.Status200OK,
-                        new Response { Status = "Success", Message = "Email verified successfully" });
+                    /*return StatusCode(StatusCodes.Status200OK,
+                        new Response { Status = "Success", Message = "Email verified successfully" });*/
+                    return Redirect("http://localhost:3000");
                 }
             }
 
