@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Book_Bazaar.Migrations
 {
     /// <inheritdoc />
-    public partial class RolesSeeded : Migration
+    public partial class Book_Bazaar : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -163,9 +163,9 @@ namespace Book_Bazaar.Migrations
                 columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
                 values: new object[,]
                 {
-                    { "4cbab96e-9095-4ecc-ae7f-54fceff206e3", "1", "Admin", "Admin" },
-                    { "8075fd8b-5859-4cff-ab60-0345997ca369", "3", "Vendor", "Vendor" },
-                    { "a57d9d55-b2b3-4325-947a-b3551baf3cd9", "2", "User", "User" }
+                    { "c13b6a62-3347-4556-9b9c-f53af9612fe9", "2", "User", "User" },
+                    { "dc5f1792-a8d6-4c4f-9902-fafaeb2ef09f", "3", "Vendor", "Vendor" },
+                    { "fd523e56-b6d9-4d11-8f8a-de9a665be9db", "1", "Admin", "Admin" }
                 });
 
             migrationBuilder.CreateIndex(

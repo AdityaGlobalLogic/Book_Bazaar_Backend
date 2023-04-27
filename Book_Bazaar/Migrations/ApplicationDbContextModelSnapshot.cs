@@ -51,21 +51,21 @@ namespace Book_Bazaar.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "4cbab96e-9095-4ecc-ae7f-54fceff206e3",
+                            Id = "fd523e56-b6d9-4d11-8f8a-de9a665be9db",
                             ConcurrencyStamp = "1",
                             Name = "Admin",
                             NormalizedName = "Admin"
                         },
                         new
                         {
-                            Id = "a57d9d55-b2b3-4325-947a-b3551baf3cd9",
+                            Id = "c13b6a62-3347-4556-9b9c-f53af9612fe9",
                             ConcurrencyStamp = "2",
                             Name = "User",
                             NormalizedName = "User"
                         },
                         new
                         {
-                            Id = "8075fd8b-5859-4cff-ab60-0345997ca369",
+                            Id = "dc5f1792-a8d6-4c4f-9902-fafaeb2ef09f",
                             ConcurrencyStamp = "3",
                             Name = "Vendor",
                             NormalizedName = "Vendor"
